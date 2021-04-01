@@ -36,7 +36,7 @@ const serverCallBack = async (req, res) => {
 	if (end_diff > 0) {
 		additionalMessage += `Please contact me tomorrow.`;
 	}
-	const message = `
+	const html_home = `
 				<h1>Hello everyone,</h1>
 				<h2>Welcome to our page.</h2>
 				<h3>Now, it\'s ${now}.</h3>
@@ -46,13 +46,13 @@ const serverCallBack = async (req, res) => {
 				${additionalMessage && `<p>${additionalMessage}</p>`}
 				<p>Consult <a href="/list-uni-uk">list</a> of countries in the world</p>
 	`;
-	const home = template(message);
+	const home = template(html_home);
 
 	res.writeHead('200', { 'Content-Type': 'text/html' });
 	if (url === '/list-uni-uk') {
 		let html = '';
 		dataCountries.map((country) => {
-			return (html += `<li style="padding: 1rem; background: white">
+			return (html += `<li>
 			<h4>${country.name}</h4>
 			<p>Population: ${country.population}</p>
 			<p>Currency: ${country.currency}</p>
@@ -60,7 +60,7 @@ const serverCallBack = async (req, res) => {
 		});
 		const page = `
 				<h1>Here is the list of countries in the world.</h1>
-				<ul style="list-style: none;display: grid; grid-template-columns: auto auto auto auto;grid-column-gap: 10px;grid-row-gap: 10px">${html}</ul>
+				<ul>${html}</ul>
 		`;
 
 		res.end(template(page));
