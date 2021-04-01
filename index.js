@@ -1,8 +1,9 @@
 const http = require('http');
-const moment = require('moment');
-const template = require('./template');
-const fetchData = require('./fetch');
 const fs = require('fs');
+
+const moment = require('moment');
+
+const fetchData = require('./fetch');
 
 var html_content = undefined;
 
@@ -13,17 +14,18 @@ const serverCallBack = async (req, res) => {
 	const now = moment().format('HH:mm');
 	const start_diff = start_time.diff(moment(), 'minutes');
 	const end_diff = moment().diff(finish_time, 'minutes');
-	let additionalMessage = '';
 	const body_begin_index = html_content.indexOf('<body>');
 	const body_end_index = html_content.indexOf('</body>');
 	const string_until_body = html_content.slice(0, body_begin_index + 6);
 	const string_from_body = html_content.slice(body_end_index);
+	let additionalMessage = '';
 
 	const listCountries = await fetchData(
 		'https://api.teleport.org/api/countries/'
 	).then((res) => {
 		return res._links['country:items'];
 	});
+
 	const dataCountries = await Promise.all(
 		listCountries.map((country) => {
 			const { name, href } = country;
@@ -37,12 +39,15 @@ const serverCallBack = async (req, res) => {
 			});
 		})
 	);
+
 	if (start_diff > 0) {
 		additionalMessage = `Please contact me in ${start_diff} minutes.\n`;
 	}
+
 	if (end_diff > 0) {
 		additionalMessage += `Please contact me tomorrow.`;
 	}
+
 	const html_home = `
 				<h1>Hello everyone,</h1>
 				<h2>Welcome to our page.</h2>
@@ -70,7 +75,7 @@ const serverCallBack = async (req, res) => {
 				<h2>Here is the list of countries in the world.</h2>
 				<ul>${html_list}</ul>
 		`;
-		let html = string_from_body + page + string_until_body;
+		html = string_from_body + page + string_until_body;
 		res.end(html);
 	}
 	res.end(html);
