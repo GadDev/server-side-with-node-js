@@ -2,6 +2,9 @@ const http = require('http');
 const moment = require('moment');
 const template = require('./template');
 const fetchData = require('./fetch');
+const fs = require('fs');
+
+var html_content = undefined;
 
 const serverCallBack = async (req, res) => {
 	const url = req.url;
@@ -11,6 +14,11 @@ const serverCallBack = async (req, res) => {
 	const start_diff = start_time.diff(moment(), 'minutes');
 	const end_diff = moment().diff(finish_time, 'minutes');
 	let additionalMessage = '';
+	const body_begin_index = html_content.indexOf('<body>');
+	const body_end_index = html_content.indexOf('</body>');
+	const string_until_body = html_content.slice(0, body_begin_index + 6);
+	const string_from_body = html_content.slice(body_end_index);
+
 	const listCountries = await fetchData(
 		'https://api.teleport.org/api/countries/'
 	).then((res) => {
@@ -20,7 +28,6 @@ const serverCallBack = async (req, res) => {
 		listCountries.map((country) => {
 			const { name, href } = country;
 			return fetchData(href).then((res) => {
-				console.log(res);
 				return {
 					name,
 					population: res.population,
@@ -46,26 +53,34 @@ const serverCallBack = async (req, res) => {
 				${additionalMessage && `<p>${additionalMessage}</p>`}
 				<p>Consult <a href="/list-uni-uk">list</a> of countries in the world</p>
 	`;
-	const home = template(html_home);
+	let html = string_from_body + html_home + string_until_body;
 
 	res.writeHead('200', { 'Content-Type': 'text/html' });
 	if (url === '/list-uni-uk') {
-		let html = '';
+		let html_list = '';
 		dataCountries.map((country) => {
-			return (html += `<li>
+			return (html_list += `<li>
 			<h4>${country.name}</h4>
 			<p>Population: ${country.population}</p>
 			<p>Currency: ${country.currency}</p>
 			</li>`);
 		});
-		const page = `
-				<h1>Here is the list of countries in the world.</h1>
-				<ul>${html}</ul>
+		let page = `
+			<header><h1><a href="/">Home</a></h1></header>
+				<h2>Here is the list of countries in the world.</h2>
+				<ul>${html_list}</ul>
 		`;
-
-		res.end(template(page));
+		let html = string_from_body + page + string_until_body;
+		res.end(html);
 	}
-	res.end(home);
+	res.end(html);
 };
 
 http.createServer(serverCallBack).listen('8080');
+
+fs.readFile('./index.html', (err, html) => {
+	if (err) {
+		throw new Error(err);
+	}
+	html_content = html;
+});
